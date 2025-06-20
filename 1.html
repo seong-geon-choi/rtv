@@ -58,7 +58,7 @@
         
         .channel-grid {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -70,8 +70,10 @@
             text-align: center;
             transition: all 0.3s ease;
             border: 2px solid transparent;
-            flex: 1;
+            flex: 1 1 0;
+            min-width: 200px;
             min-height: 160px;
+            max-width: 240px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -214,73 +216,44 @@
         <div class="channels">
             <div class="channel-grid">
                 <div class="channel-card">
-                    <div class="channel-logo kbs1">KBS 1TV</div>
-                    <a href="https://onair.kbs.co.kr/" class="channel-btn" target="_blank">
-                        KBS 1TV 시청하기
-                    </a>
+                    <div class="channel-logo kbs1"><img src="https://onair.kbs.co.kr/favicon.ico" alt="KBS1 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">KBS 1TV</div>
+                    <a href="https://onair.kbs.co.kr/" class="channel-btn" target="_blank">KBS 1TV 시청하기</a>
                     <small>뉴스, 교양, 드라마</small>
                 </div>
-                
                 <div class="channel-card">
-                    <div class="channel-logo kbs2">KBS 2TV</div>
-                    <a href="https://onair.kbs.co.kr/" class="channel-btn" target="_blank">
-                        KBS 2TV 시청하기
-                    </a>
+                    <div class="channel-logo kbs2"><img src="https://onair.kbs.co.kr/favicon.ico" alt="KBS2 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">KBS 2TV</div>
+                    <a href="https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=12" class="channel-btn" target="_blank">KBS 2TV 시청하기</a>
                     <small>예능, 스포츠, 드라마</small>
                 </div>
-                
                 <div class="channel-card">
-                    <div class="channel-logo mbc">MBC</div>
-                    <a href="https://onair.imbc.com/" class="channel-btn" target="_blank">
-                        MBC 시청하기
-                    </a>
+                    <div class="channel-logo mbc"><img src="https://onair.imbc.com/favicon.ico" alt="MBC 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">MBC</div>
+                    <a href="https://onair.imbc.com/" class="channel-btn" target="_blank">MBC 시청하기</a>
                     <small>드라마, 예능, 뉴스</small>
                 </div>
-                
                 <div class="channel-card">
-                    <div class="channel-logo sbs">SBS</div>
-                    <a href="https://www.sbs.co.kr/live" class="channel-btn" target="_blank">
-                        SBS 시청하기
-                    </a>
+                    <div class="channel-logo sbs"><img src="https://www.sbs.co.kr/favicon.ico" alt="SBS 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">SBS</div>
+                    <a href="https://www.sbs.co.kr/live" class="channel-btn" target="_blank">SBS 시청하기</a>
                     <small>드라마, 예능, 뉴스</small>
                 </div>
-                
                 <div class="channel-card">
-                    <div class="channel-logo ebs">EBS</div>
-                    <a href="https://www.ebs.co.kr/onair?channelCodeString=tv" class="channel-btn" target="_blank">
-                        EBS 시청하기
-                    </a>
+                    <div class="channel-logo ebs"><img src="https://www.ebs.co.kr/favicon.ico" alt="EBS 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">EBS</div>
+                    <a href="https://www.ebs.co.kr/onair?channelCodeString=tv" class="channel-btn" target="_blank">EBS 시청하기</a>
                     <small>교육, 다큐멘터리</small>
+                </div>
+            </div>
+            <div class="channel-grid">
+                <div class="channel-card">
+                    <div class="channel-logo" style="color:#007aff;"><img src="https://01.ondotv.com/favicon.ico" alt="온도티비 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">온도티비</div>
+                    <a href="https://01.ondotv.com/" class="channel-btn" target="_blank">온도티비 바로가기</a>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-logo" style="color:#ff6600;"><img src="https://tvchak153.com/favicon.ico" alt="티비착 파비콘" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;" onerror="this.style.display='none'">티비착</div>
+                    <a href="https://tvchak153.com/" class="channel-btn" target="_blank">티비착 바로가기</a>
+                    <img src="https://tvchak153.com/favicon.ico" alt="티비착 파비콘" style="width:32px;height:32px;margin:0 auto;display:block;" onerror="this.style.display='none'">
                 </div>
             </div>
             
             <div class="bottom-info">
-                <div class="info-section">
-                    <h3>🎯 시청 방법</h3>
-                    <ul>
-                        <li>버튼 클릭으로 공식 실시간 스트리밍 페이지 이동</li>
-                        <li>일부 방송사는 회원가입 필요</li>
-                        <li>안정적인 인터넷 연결 필요</li>
-                        <li>Chrome 브라우저 권장</li>
-                    </ul>
-                </div>
-                
-                <div class="info-section">
-                    <h3>📱 대안 앱 서비스</h3>
-                    <ul>
-                        <li><strong>Wavve</strong> - 유료 구독 모든 지상파</li>
-                        <li><strong>Tving</strong> - CJ ENM 실시간 방송</li>
-                        <li><strong>KBS+</strong> - KBS 공식 앱</li>
-                        <li><strong>SBS</strong> - SBS 공식 앱</li>
-                    </ul>
-                </div>
-                
-                <div class="warning">
-                    <h4>⚠️ 주의사항</h4>
-                    <p>• 모든 링크는 각 방송사의 공식 사이트입니다<br>
-                    • 실시간 스트리밍은 방송사 정책에 따라 변경될 수 있습니다<br>
-                    • 해외에서는 접속이 제한될 수 있습니다</p>
-                </div>
             </div>
         </div>
     </div>
