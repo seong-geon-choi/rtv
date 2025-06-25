@@ -133,15 +133,22 @@
 
             // 드래그 앤 드롭 이벤트 처리
             document.querySelectorAll('.channel-card').forEach(card => {
+                card.setAttribute('draggable', 'true');
+
                 card.addEventListener('dragstart', function(e) {
                     draggedCard = this;
                     this.classList.add('dragging');
-                    // 링크 이동 방지
-                    e.preventDefault();
+                    // 드래그 데이터 설정
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', this.outerHTML);
                 });
 
                 card.addEventListener('dragend', function() {
                     this.classList.remove('dragging');
+                    // 모든 드롭 인디케이터 제거
+                    document.querySelectorAll('.drop-indicator').forEach(indicator => {
+                        indicator.remove();
+                    });
                     saveChannelOrder();
                 });
 
@@ -173,39 +180,153 @@
                     draggedCard = null;
                 });
 
-                // 클릭 이벤트 처리
+                // 클릭 이벤트 처리 - 드래그 중일 때 링크 이동 방지
                 card.addEventListener('click', function(e) {
                     if (this.classList.contains('dragging')) {
                         e.preventDefault();
+                        return false;
                     }
                 });
+
             });
 
             [mainChannels, otherChannels].forEach(container => {
                 container.addEventListener('dragover', function(e) {
                     e.preventDefault();
-                    const afterElement = getDragAfterElement(container, e.clientY);
+                    e.dataTransfer.dropEffect = 'move';
+                    
+                    // 드롭 인디케이터 표시 (X, Y 좌표 모두 전달)
                     const draggable = document.querySelector('.dragging');
-                    if (afterElement == null) {
-                        container.appendChild(draggable);
-                    } else {
-                        container.insertBefore(draggable, afterElement);
+                    if (draggable) {
+                        showDropIndicator(container, e.clientX, e.clientY, draggable);
                     }
+                });
+
+                container.addEventListener('dragleave', function(e) {
+                    // 컨테이너를 완전히 벗어났을 때만 인디케이터 제거
+                    if (!container.contains(e.relatedTarget)) {
+                        removeDropIndicator(container);
+                    }
+                });
+
+                container.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const draggable = document.querySelector('.dragging');
+                    if (draggable) {
+                        const insertInfo = getInsertPosition(container, e.clientX, e.clientY, draggable);
+                        if (insertInfo.shouldMove) {
+                            if (insertInfo.insertBefore) {
+                                container.insertBefore(draggable, insertInfo.insertBefore);
+                            } else {
+                                container.appendChild(draggable);
+                            }
+                        }
+                    }
+                    removeDropIndicator(container);
                 });
             });
 
-            function getDragAfterElement(container, y) {
-                const draggableElements = [...container.querySelectorAll('.channel-card:not(.dragging)')];
+            function getInsertPosition(container, x, y, draggable) {
+                const allCards = [...container.querySelectorAll('.channel-card')];
+                
+                if (allCards.length <= 1) {
+                    return { shouldMove: false };
+                }
 
-                return draggableElements.reduce((closest, child) => {
-                    const box = child.getBoundingClientRect();
-                    const offset = y - box.top - box.height / 2;
-                    if (offset < 0 && offset > closest.offset) {
-                        return { offset: offset, element: child };
-                    } else {
-                        return closest;
+                const currentPosition = allCards.indexOf(draggable);
+                
+                // 드래그 위치에 가장 가까운 카드 찾기 (2D 거리 계산)
+                let closestCard = null;
+                let minDistance = Number.POSITIVE_INFINITY;
+                let insertBefore = null;
+                let targetPosition = currentPosition;
+
+                for (let i = 0; i < allCards.length; i++) {
+                    if (allCards[i] === draggable) continue;
+                    
+                    const cardBox = allCards[i].getBoundingClientRect();
+                    const cardCenterX = cardBox.left + cardBox.width / 2;
+                    const cardCenterY = cardBox.top + cardBox.height / 2;
+                    
+                    // 2D 거리 계산
+                    const distance = Math.sqrt(
+                        Math.pow(x - cardCenterX, 2) + Math.pow(y - cardCenterY, 2)
+                    );
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestCard = allCards[i];
+                        
+                        // 드래그 위치가 카드의 어느 쪽에 있는지 판단
+                        const cardBox = allCards[i].getBoundingClientRect();
+                        
+                        // 같은 줄에 있는지 확인 (Y 좌표 기준)
+                        const isSameRow = Math.abs(y - (cardBox.top + cardBox.height / 2)) < cardBox.height / 2;
+                        
+                        if (isSameRow) {
+                            // 같은 줄: X 좌표 기준으로 앞/뒤 결정
+                            if (x < cardCenterX) {
+                                insertBefore = allCards[i];
+                                targetPosition = i > currentPosition ? i - 1 : i;
+                            } else {
+                                insertBefore = i + 1 < allCards.length ? allCards[i + 1] : null;
+                                targetPosition = i >= currentPosition ? i : i + 1;
+                            }
+                        } else {
+                            // 다른 줄: Y 좌표 기준으로 위/아래 결정
+                            if (y < cardCenterY) {
+                                insertBefore = allCards[i];
+                                targetPosition = i > currentPosition ? i - 1 : i;
+                            } else {
+                                insertBefore = i + 1 < allCards.length ? allCards[i + 1] : null;
+                                targetPosition = i >= currentPosition ? i : i + 1;
+                            }
+                        }
                     }
-                }, { offset: Number.NEGATIVE_INFINITY }).element;
+                }
+
+                // 컨테이너의 빈 공간에 드롭하는 경우 (모든 카드보다 멀리 있는 경우)
+                if (minDistance > 300) { // 임계값
+                    const containerBox = container.getBoundingClientRect();
+                    const allCardsBoxes = allCards.map(card => card.getBoundingClientRect());
+                    
+                    // 컨테이너 끝에 추가
+                    insertBefore = null;
+                    targetPosition = allCards.length - 1;
+                }
+
+                const shouldMove = targetPosition !== currentPosition;
+
+                return {
+                    shouldMove: shouldMove,
+                    insertBefore: insertBefore,
+                    targetPosition: targetPosition
+                };
+            }
+
+            // 드롭 인디케이터 표시 함수
+            function showDropIndicator(container, x, y, draggable) {
+                // 기존 인디케이터 제거
+                removeDropIndicator(container);
+                
+                const insertInfo = getInsertPosition(container, x, y, draggable);
+                if (!insertInfo.shouldMove) return;
+
+                // 드롭 인디케이터 생성
+                const indicator = document.createElement('div');
+                indicator.className = 'drop-indicator';
+                
+                if (insertInfo.insertBefore) {
+                    container.insertBefore(indicator, insertInfo.insertBefore);
+                } else {
+                    container.appendChild(indicator);
+                }
+            }
+
+            // 드롭 인디케이터 제거 함수
+            function removeDropIndicator(container) {
+                const indicators = container.querySelectorAll('.drop-indicator');
+                indicators.forEach(indicator => indicator.remove());
             }
 
             // 초기 순서 불러오기
