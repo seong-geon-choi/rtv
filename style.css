@@ -51,11 +51,10 @@ body {
 }
 
 .channel-grid {
-    display: flex;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 15px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
     min-height: 200px;
     padding: 10px;
     border-radius: 12px;
@@ -69,7 +68,6 @@ body {
     text-align: center;
     transition: all 0.3s ease;
     border: 2px solid transparent;
-    flex: 1 1 0;
     min-width: 200px;
     min-height: 160px;
     max-width: 240px;
@@ -83,6 +81,8 @@ body {
     touch-action: none;
     position: relative;
     z-index: 1;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .channel-card.dragging {
@@ -152,12 +152,7 @@ body {
 
 @media (max-width: 1200px) {
     .channel-grid {
-        flex-wrap: wrap;
-    }
-    
-    .channel-card {
-        flex: 1 1 calc(50% - 10px);
-        min-width: 200px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 }
 
@@ -172,7 +167,7 @@ body {
     }
     
     .channel-grid {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         gap: 10px;
     }
     
