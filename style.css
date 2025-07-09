@@ -52,13 +52,17 @@ body {
 
 .channel-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, 240px);
     gap: 15px;
     margin-bottom: 20px;
     min-height: 200px;
     padding: 10px;
     border-radius: 12px;
     background: rgba(0,0,0,0.02);
+    justify-items: start;
+    justify-content: start;
+    align-items: start;
+    overflow-x: auto;
 }
 
 .channel-card {
@@ -68,15 +72,15 @@ body {
     text-align: center;
     transition: all 0.3s ease;
     border: 2px solid transparent;
-    min-width: 200px;
-    min-height: 160px;
+    min-width: 240px;
     max-width: 240px;
+    width: 240px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     text-decoration: none;
     color: inherit;
-    cursor: move;
+    cursor: pointer;
     user-select: none;
     touch-action: none;
     position: relative;
@@ -85,10 +89,14 @@ body {
     box-sizing: border-box;
 }
 
+.channel-card.move-mode {
+    cursor: move !important;
+}
+
 .channel-card.dragging {
     opacity: 0.8;
     z-index: 1000;
-    cursor: grabbing;
+    cursor: grabbing !important;
     background: #ffffff;
     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     transform: scale(1.05);
@@ -150,27 +158,40 @@ body {
     margin-top: 10px;
 }
 
+.channel-placeholder {
+    border: 2px dashed #667eea;
+    background: #e6eaff;
+    min-width: 200px;
+    min-height: 160px;
+    max-width: 240px;
+    border-radius: 12px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 @media (max-width: 1200px) {
     .channel-grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fill, 240px);
+    }
+    .channel-card {
+        min-width: 240px;
+        max-width: 240px;
+        width: 240px;
     }
 }
 
 @media (max-width: 800px) {
-    .bottom-info {
-        flex-direction: column;
-        gap: 10px;
+    .channel-grid {
+        grid-template-columns: repeat(auto-fill, 240px);
     }
-    
+    .channel-card {
+        min-width: 240px;
+        max-width: 240px;
+        width: 240px;
+    }
     .header h1 {
         font-size: 24px;
     }
-    
-    .channel-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
     body {
         padding: 10px;
     }

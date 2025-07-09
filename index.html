@@ -81,7 +81,10 @@
             const mainChannels = document.getElementById('mainChannels');
             const otherChannels = document.getElementById('otherChannels');
             let draggedCard = null;
-            let touchStartX, touchStartY;
+            let moveMode = false;
+            let moveTimer = null;
+            let placeholder = document.createElement('div');
+            placeholder.className = 'channel-placeholder';
 
             // 저장된 순서 불러오기
             function loadChannelOrder() {
@@ -101,8 +104,8 @@
 
             // 채널 순서 저장하기
             function saveChannelOrder() {
-                const mainOrder = Array.from(mainChannels.children).map(card => card.dataset.channel);
-                const otherOrder = Array.from(otherChannels.children).map(card => card.dataset.channel);
+                const mainOrder = Array.from(mainChannels.children).filter(card => !card.classList.contains('channel-placeholder')).map(card => card.dataset.channel);
+                const otherOrder = Array.from(otherChannels.children).filter(card => !card.classList.contains('channel-placeholder')).map(card => card.dataset.channel);
 
                 localStorage.setItem('mainChannelsOrder', JSON.stringify(mainOrder));
                 localStorage.setItem('otherChannelsOrder', JSON.stringify(otherOrder));
@@ -110,7 +113,7 @@
 
             // 채널 순서 재정렬
             function reorderChannels(container, orderArray) {
-                const currentCards = Array.from(container.children);
+                const currentCards = Array.from(container.children).filter(card => !card.classList.contains('channel-placeholder'));
                 const orderedCards = [];
 
                 orderArray.forEach(channelId => {
@@ -131,81 +134,145 @@
                 orderedCards.forEach(card => container.appendChild(card));
             }
 
-            // 드래그 앤 드롭 이벤트 처리
+            // 드래그 앤 드롭/이동 모드 이벤트 처리
             document.querySelectorAll('.channel-card').forEach(card => {
-                card.addEventListener('dragstart', function(e) {
-                    draggedCard = this;
-                    this.classList.add('dragging');
-                    // 링크 이동 방지
-                    e.preventDefault();
-                });
+                card.draggable = false;
+                card.classList.remove('move-mode');
 
+                // 1초 이상 클릭 시 이동 모드 진입
+                card.addEventListener('mousedown', function(e) {
+                    if (moveMode) return;
+                    moveTimer = setTimeout(() => {
+                        moveMode = true;
+                        card.classList.add('move-mode');
+                        card.draggable = true;
+                    }, 1000);
+                });
+                card.addEventListener('mouseup', function(e) {
+                    clearTimeout(moveTimer);
+                });
+                card.addEventListener('mouseleave', function(e) {
+                    clearTimeout(moveTimer);
+                });
+                // 이동 모드 해제(드래그 끝나면)
                 card.addEventListener('dragend', function() {
+                    card.classList.remove('move-mode');
+                    card.draggable = false;
+                    moveMode = false;
                     this.classList.remove('dragging');
+                    if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
                     saveChannelOrder();
                 });
-
-                // 터치 이벤트 처리
-                card.addEventListener('touchstart', function(e) {
+                // 드래그 시작
+                card.addEventListener('dragstart', function(e) {
+                    if (!moveMode) {
+                        e.preventDefault();
+                        return;
+                    }
                     draggedCard = this;
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
                     this.classList.add('dragging');
+                    // 드래그 시작 시 플레이스홀더 추가
+                    setTimeout(() => {
+                        this.style.display = 'none';
+                        this.parentNode.insertBefore(placeholder, this.nextSibling);
+                    }, 0);
                 });
-
-                card.addEventListener('touchmove', function(e) {
-                    if (!draggedCard) return;
-
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    const moveX = touch.clientX - touchStartX;
-                    const moveY = touch.clientY - touchStartY;
-
-                    this.style.transform = `translate(${moveX}px, ${moveY}px)`;
-                });
-
-                card.addEventListener('touchend', function() {
-                    if (!draggedCard) return;
-
-                    this.style.transform = '';
-                    this.classList.remove('dragging');
-                    saveChannelOrder();
-                    draggedCard = null;
-                });
-
                 // 클릭 이벤트 처리
                 card.addEventListener('click', function(e) {
                     if (this.classList.contains('dragging')) {
                         e.preventDefault();
                     }
                 });
+                // 모바일 터치(1초 이상)
+                card.addEventListener('touchstart', function(e) {
+                    if (moveMode) return;
+                    moveTimer = setTimeout(() => {
+                        moveMode = true;
+                        card.classList.add('move-mode');
+                        card.draggable = true;
+                    }, 1000);
+                });
+                card.addEventListener('touchend', function(e) {
+                    clearTimeout(moveTimer);
+                    if (moveMode) {
+                        card.classList.remove('move-mode');
+                        card.draggable = false;
+                        moveMode = false;
+                    }
+                });
+                card.addEventListener('touchmove', function(e) {
+                    clearTimeout(moveTimer);
+                });
             });
 
             [mainChannels, otherChannels].forEach(container => {
                 container.addEventListener('dragover', function(e) {
                     e.preventDefault();
-                    const afterElement = getDragAfterElement(container, e.clientY);
-                    const draggable = document.querySelector('.dragging');
+                    const afterElement = getGridDragAfterElement(container, e.clientX, e.clientY);
+                    if (afterElement === placeholder) return;
+                    if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
                     if (afterElement == null) {
-                        container.appendChild(draggable);
+                        container.appendChild(placeholder);
                     } else {
-                        container.insertBefore(draggable, afterElement);
+                        container.insertBefore(placeholder, afterElement);
+                    }
+                });
+                container.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (placeholder.parentNode) {
+                        placeholder.parentNode.replaceChild(draggedCard, placeholder);
+                        draggedCard.style.display = '';
+                        draggedCard.classList.remove('dragging');
+                        draggedCard.classList.remove('move-mode');
+                        draggedCard.draggable = false;
+                        moveMode = false;
+                        saveChannelOrder();
                     }
                 });
             });
 
-            function getDragAfterElement(container, y) {
-                const draggableElements = [...container.querySelectorAll('.channel-card:not(.dragging)')];
-
-                return draggableElements.reduce((closest, child) => {
-                    const box = child.getBoundingClientRect();
-                    const offset = y - box.top - box.height / 2;
-                    if (offset < 0 && offset > closest.offset) {
-                        return { offset: offset, element: child };
-                    } else {
-                        return closest;
+            function getGridDragAfterElement(container, x, y) {
+                const elements = [...container.querySelectorAll('.channel-card:not(.dragging), .channel-placeholder')];
+                if (elements.length === 0) return null;
+                let closest = null;
+                let closestDist = Infinity;
+                let rowLast = null;
+                let rowLastRect = null;
+                // 각 카드의 rowTop을 기준으로 같은 행의 마지막 카드 찾기
+                elements.forEach(el => {
+                    if (el.classList.contains('channel-placeholder')) return;
+                    const rect = el.getBoundingClientRect();
+                    const rowTop = Math.round(rect.top);
+                    // 마우스가 이 카드의 행에 있는지 확인
+                    if (y >= rect.top && y <= rect.bottom) {
+                        if (!rowLast || rect.left > rowLastRect.left) {
+                            rowLast = el;
+                            rowLastRect = rect;
+                        }
                     }
-                }, { offset: Number.NEGATIVE_INFINITY }).element;
+                    // 기존 가장 가까운 카드 찾기(기본 동작)
+                    const dx = x - (rect.left + rect.width / 2);
+                    const dy = y - (rect.top + rect.height / 2);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closest = el;
+                    }
+                });
+                // 마우스가 행의 마지막 카드 오른쪽(빈 공간)에 있으면 그 행의 마지막 뒤에 placeholder
+                if (rowLast && x > rowLastRect.right) {
+                    return rowLast.nextSibling;
+                }
+                // 마우스가 그리드의 오른쪽/아래쪽 끝에 있으면 null 반환 → 맨 끝에 추가
+                const gridRect = container.getBoundingClientRect();
+                if (x > gridRect.right - 10 || y > gridRect.bottom - 10) return null;
+                // 카드가 1개 이하이거나, 마우스가 마지막 카드의 오른쪽 아래에 있으면 null 반환
+                if (elements.length > 0) {
+                    const last = elements[elements.length - 1];
+                    const lastRect = last.getBoundingClientRect();
+                    if (x > lastRect.right - 10 && y > lastRect.bottom - 10) return null;
+                }
+                return closest;
             }
 
             // 초기 순서 불러오기
